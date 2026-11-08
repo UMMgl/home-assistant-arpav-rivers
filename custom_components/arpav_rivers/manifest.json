@@ -1,17 +1,17 @@
 {
   "domain": "arpav_rivers",
   "name": "HA ARPAV River Level",
-  "version": "0.1.0",
-  "config_flow": true,
-  "single_config_entry": true,
-  "integration_type": "service",
-  "iot_class": "cloud_polling",
   "codeowners": [
     "@UMMgl"
   ],
+  "config_flow": true,
   "documentation": "https://github.com/UMMgl/home-assistant-arpav-rivers",
+  "integration_type": "service",
+  "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/UMMgl/home-assistant-arpav-rivers/issues",
   "requirements": [
     "veneto-hydro-client==0.1.0"
-  ]
+  ],
+  "single_config_entry": true,
+  "version": "0.1.0"
 }

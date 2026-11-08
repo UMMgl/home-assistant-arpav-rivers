@@ -2,6 +2,7 @@ name: Public candidate CI
 
 on:
   push:
+    branches: [main]
   pull_request:
 
 permissions:
