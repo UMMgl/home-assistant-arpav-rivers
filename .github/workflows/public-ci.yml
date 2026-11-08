@@ -23,6 +23,7 @@ jobs:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
         with:
           ref: ${{ env.VALIDATED_SHA }}
+          persist-credentials: false
       - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
         with:
           python-version: '3.14'
@@ -40,6 +41,7 @@ jobs:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
         with:
           ref: ${{ env.VALIDATED_SHA }}
+          persist-credentials: false
       - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
         with:
           python-version: '3.14'
@@ -53,6 +55,7 @@ jobs:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
         with:
           ref: ${{ env.VALIDATED_SHA }}
+          persist-credentials: false
       - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
         with:
           python-version: '3.14'
@@ -71,6 +74,7 @@ jobs:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
         with:
           ref: ${{ env.VALIDATED_SHA }}
+          persist-credentials: false
       - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
         with:
           python-version: '3.14'
@@ -90,6 +94,7 @@ jobs:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
         with:
           ref: ${{ env.VALIDATED_SHA }}
+          persist-credentials: false
       - run: docker run --rm -v "$GITHUB_WORKSPACE:/github/workspace" ghcr.io/home-assistant/hassfest@sha256:39031fe75baf5566814a01f3c414764c029c54a0e1d742965d5b94a0d6120875
 
   hacs:
@@ -99,6 +104,7 @@ jobs:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
         with:
           ref: ${{ env.VALIDATED_SHA }}
+          persist-credentials: false
       - uses: docker://ghcr.io/hacs/action@sha256:dc92fdad2f6ffbe74bffb7269d781ea8e064f52d9bb486cdf3925d74e7ab6ebf
         env:
           INPUT_CATEGORY: integration
@@ -107,6 +113,26 @@ jobs:
           INPUT_COMMENT: 'false'
           INPUT_IGNORE: ''
 
+  static-security:
+    name: Static security (independent)
+    if: github.event.repository.name == 'home-assistant-arpav-rivers'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          ref: ${{ env.VALIDATED_SHA }}
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: '3.14'
+      - name: Bandit Python SAST
+        run: |
+          python -m pip install 'bandit==1.9.4'
+          python -m bandit -q -r custom_components/arpav_rivers
+      - name: Public content hygiene
+        run: python scripts/check_public_hygiene.py .
+
   hygiene:
     if: github.event.repository.name == 'home-assistant-arpav-rivers'
     runs-on: ubuntu-latest
@@ -114,6 +140,7 @@ jobs:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
         with:
           ref: ${{ env.VALIDATED_SHA }}
+          persist-credentials: false
           fetch-depth: 0
       - run: python scripts/check_public_hygiene.py .
       - uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e
