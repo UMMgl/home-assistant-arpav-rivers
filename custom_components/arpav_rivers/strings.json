@@ -1,0 +1,25 @@
+{
+  "title": "HA ARPAV River Level",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Configure HA ARPAV River Level",
+        "description": "Select an ARPAV river profile to expose public hydrometric level observations in Home Assistant.",
+        "data": {
+          "profile": "River profile"
+        },
+        "data_description": {
+          "profile": "Select the monitored ARPAV river profile."
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Unable to reach the ARPAV data source. Check network connectivity and try again.",
+      "unknown": "Unexpected error while validating the data source."
+    },
+    "abort": {
+      "already_configured": "HA ARPAV River Level is already configured.",
+      "single_instance_allowed": "HA ARPAV River Level is already configured."
+    }
+  }
+}

@@ -1,0 +1,26 @@
+name: Bug report
+description: Report a reproducible non-security issue in HA ARPAV River Level
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not report security vulnerabilities or credentials here. Use SECURITY.md.
+        HA ARPAV River Level is informational and is not an official civil-protection warning service.
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Integration version
+    validations:
+      required: true
+  - type: input
+    id: ha_version
+    attributes:
+      label: Home Assistant version
+    validations:
+      required: true

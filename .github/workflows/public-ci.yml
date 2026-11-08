@@ -1,0 +1,149 @@
+name: Public candidate CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+env:
+  VALIDATED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+
+concurrency:
+  group: arpav-public-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit:
+    if: github.event.repository.name == 'home-assistant-arpav-rivers'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          ref: ${{ env.VALIDATED_SHA }}
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: '3.14'
+      - run: python -m pip install 'pytest==9.0.3' 'veneto-hydro-client==0.1.0'
+      - run: python -m pytest -q tests/test_client_adapter.py tests/test_health.py tests/test_hacs_packaging_contract.py
+
+  compatibility:
+    if: github.event.repository.name == 'home-assistant-arpav-rivers'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        ha: ['2026.8.2', '2026.9.4', '2026.10.0b0']
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          ref: ${{ env.VALIDATED_SHA }}
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: '3.14'
+      - run: python -m pip install 'homeassistant==${{ matrix.ha }}' 'veneto-hydro-client==0.1.0'
+      - run: python -c 'import custom_components.arpav_rivers, custom_components.arpav_rivers.config_flow, custom_components.arpav_rivers.coordinator, custom_components.arpav_rivers.sensor'
+
+  runtime:
+    if: github.event.repository.name == 'home-assistant-arpav-rivers'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          ref: ${{ env.VALIDATED_SHA }}
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: '3.14'
+      - run: >-
+          python -m pip install 'pytest-homeassistant-custom-component==0.13.367'
+          'pytest-cov==7.1.0' 'ruff==0.16.3' 'mypy==2.3.1' 'veneto-hydro-client==0.1.0'
+      - run: python -m pytest -q ha_tests tests/test_client_adapter.py tests/test_health.py --cov=custom_components.arpav_rivers --cov-branch --cov-fail-under=95
+      - run: python -m pytest -q ha_tests/test_config_flow.py --cov=custom_components.arpav_rivers.config_flow --cov-branch --cov-fail-under=100
+      - run: python -m ruff check custom_components/arpav_rivers ha_tests tests/test_client_adapter.py tests/test_health.py
+      - run: python -m mypy --strict custom_components/arpav_rivers
+
+  artifacts:
+    if: github.event.repository.name == 'home-assistant-arpav-rivers'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          ref: ${{ env.VALIDATED_SHA }}
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: '3.14'
+      - run: python -m pip install 'cyclonedx-bom==7.3.1' 'pip-audit==2.10.1' 'bandit==1.9.4'
+      - run: python -m bandit -q -r custom_components/arpav_rivers
+      - run: python scripts/prepare_release_evidence.py --output '${{ runner.temp }}/public-evidence'
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: public-evidence-${{ env.VALIDATED_SHA }}
+          path: ${{ runner.temp }}/public-evidence
+          if-no-files-found: error
+
+  hassfest:
+    if: github.event.repository.name == 'home-assistant-arpav-rivers'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          ref: ${{ env.VALIDATED_SHA }}
+          persist-credentials: false
+      - run: docker run --rm -v "$GITHUB_WORKSPACE:/github/workspace" ghcr.io/home-assistant/hassfest@sha256:39031fe75baf5566814a01f3c414764c029c54a0e1d742965d5b94a0d6120875
+
+  hacs:
+    if: github.event.repository.name == 'home-assistant-arpav-rivers'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          ref: ${{ env.VALIDATED_SHA }}
+          persist-credentials: false
+      - uses: docker://ghcr.io/hacs/action@sha256:dc92fdad2f6ffbe74bffb7269d781ea8e064f52d9bb486cdf3925d74e7ab6ebf
+        env:
+          INPUT_CATEGORY: integration
+          INPUT_REPOSITORY: ${{ github.repository }}
+          INPUT_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          INPUT_COMMENT: 'false'
+          INPUT_IGNORE: ''
+
+  static-security:
+    name: Static security (independent)
+    if: github.event.repository.name == 'home-assistant-arpav-rivers'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          ref: ${{ env.VALIDATED_SHA }}
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: '3.14'
+      - name: Bandit Python SAST
+        run: |
+          python -m pip install 'bandit==1.9.4'
+          python -m bandit -q -r custom_components/arpav_rivers
+      - name: Public content hygiene
+        run: python scripts/check_public_hygiene.py .
+
+  hygiene:
+    if: github.event.repository.name == 'home-assistant-arpav-rivers'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          ref: ${{ env.VALIDATED_SHA }}
+          persist-credentials: false
+          fetch-depth: 0
+      - run: python scripts/check_public_hygiene.py .
+      - uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_ENABLE_COMMENTS: 'false'
