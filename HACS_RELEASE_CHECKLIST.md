@@ -26,7 +26,12 @@ run proves preparation only. It does not authorize publication or deployment.
    data recovery and stale/error visibility. Record the rollback path and rehearse
    restoring the prior artifact/config backup in an isolated environment. CI import
    compatibility and current-version runtime tests do not substitute for these tests.
-7. Obtain fresh, separate human approval for release and any production deployment.
+7. BEFORE creating any public release tag, verify a matching immutable private
+   snapshot of the exact public candidate SHA. Compare every tracked file path
+   and Git blob SHA against the snapshot; retain a backup manifest and a link to
+   the private backup ref. Treat absent or unverified backups as a blocking
+   release condition. The daily post-release watch is only a safety net.
+8. Obtain fresh, separate human approval for release and any production deployment.
    Keep the PR draft until all applicable gates have evidence on the public candidate.
 
 No runtime Supabase/H2 dependency is part of this integration. The internal quality

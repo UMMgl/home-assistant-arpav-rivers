@@ -15,6 +15,7 @@ Use **Settings > Rules > Rulesets** and configure an active branch ruleset targe
 - No merge, tag, GitHub release or HACS production deployment until source and public SHA evidence is complete.
 - Public workflow checks are incomplete while `veneto-hydro-client==0.1.0` is unpublished.
 - HACS validation of the default branch may remain blocked until the package is safely merged. Do not silently waive this control. Use an approved bootstrap strategy with separate pre/post-merge validation and explicit evidence.
+- Require a verified, content-addressed private backup snapshot of the exact public candidate SHA **before** a release tag is created. Check file paths, Git blob hashes and provenance manifest. No backup means no release. The daily release watcher is not a substitute for this gate.
 - Require explicit human approval for public release and for deployment separately.
 - Source provenance: `Indirizzopermailing/Home-Assistant` commit `d83bbf5a0374f0b97b82fd2273f74710b50e92d0` (only allowlisted files exported).
 
